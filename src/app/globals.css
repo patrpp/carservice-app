@@ -1,15 +1,14 @@
+/* Import Tailwind v4 (includes preflight/base, components, utilities) */
 @import "tailwindcss";
 
+/* Custom theme variables (before or after the import) */
 :root {
   --background: #ffffff;
   --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --radius: 0.5rem;  /* example radius */
+  /* Add any other custom variables here if needed */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -19,8 +18,9 @@
   }
 }
 
+/* Global styles */
 body {
   background: var(--background);
-  color: var(--foreground);
+  color: gray !important; 
   font-family: Arial, Helvetica, sans-serif;
 }
