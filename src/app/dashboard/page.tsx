@@ -185,6 +185,11 @@ export default function Dashboard() {
             </Button>
           </div>
         </div>
+  <nav className="flex gap-8 mb-12 text-lg font-medium">
+          <Link href="/dashboard/repairs" className="text-black hover:underline">Javítások</Link>
+          <Link href="/dashboard/customers" className="text-black hover:underline">Ügyfelek</Link>
+          <Link href="/dashboard/vehicles" className="text-black hover:underline">Autók</Link>
+        </nav>
 
         {/* Javítások listája */}
         <div>
@@ -226,6 +231,14 @@ export default function Dashboard() {
                   
 
                   {/* Státusz badge */}
+                  <div className="hidden">
+  bg-yellow-100 text-yellow-800 border-yellow-400 hover:bg-yellow-50 hover:border-yellow-300
+  bg-blue-100 text-blue-800 border-blue-400 hover:bg-blue-50 hover:border-blue-300
+  bg-purple-100 text-purple-800 border-purple-400 hover:bg-purple-50 hover:border-purple-300
+  bg-orange-100 text-orange-800 border-orange-400 hover:bg-orange-50 hover:border-orange-300
+  bg-green-100 text-green-800 border-green-400 hover:bg-green-50 hover:border-green-300
+  bg-indigo-100 text-indigo-800 border-indigo-400 hover:bg-indigo-50 hover:border-indigo-300
+</div>
 <div className="flex flex-wrap gap-2 mt-4">
   {[
     { value: 'pending', label: 'Függőben', icon: '⏳', color: 'yellow' },

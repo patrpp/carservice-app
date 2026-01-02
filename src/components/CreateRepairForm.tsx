@@ -168,7 +168,7 @@ export function CreateRepairForm({ onSuccess }: CreateRepairFormProps = {}) {
         )}
       </div>
 
-      <div className="space-y-2">  {/* ← extra távolság a következő mezőhöz */}
+      <div className="space-y-2">  
         <Label htmlFor="description" className="text-black">Leírás</Label>
         <Textarea
           id="description"
