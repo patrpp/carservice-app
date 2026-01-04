@@ -17,15 +17,19 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ChevronDown, Search, Plus } from 'lucide-react';
+import { ChevronDown, Search, Plus, Pencil, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogHeader,
+  DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { CreateRepairForm } from '@/components/CreateRepairForm';
+
 
 interface JoinedRepair {
   id: string;
@@ -65,6 +69,7 @@ export default function RepairsPage() {
   const [sortBy, setSortBy] = useState<'created_at' | 'status' | 'description'>('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [isNewRepairOpen, setIsNewRepairOpen] = useState(false);
+  const [editingRepair, setEditingRepair] = useState<JoinedRepair | null>(null);
 
   useEffect(() => {
     const fetchRepairs = async () => {
@@ -87,6 +92,8 @@ export default function RepairsPage() {
         console.error('Hiba:', error);
         return;
       }
+
+      console.log("Nyers adatok a Supabase-től:", data);
 
       const formatted = (data ?? []).map((item) => {
         const vehicle = item.vehicle as unknown as {
@@ -154,56 +161,81 @@ export default function RepairsPage() {
 
   const handleRepairCreated = () => {
     setIsNewRepairOpen(false);
-    // Frissítsd a listát (új lekérdezés)
-    const fetchAgain = async () => {
-      const { data, error } = await supabase
-        .from('repairs')
-        .select(`
-          id, description, status, created_at,
-          vehicle:vehicles!inner (
-            id, make, model, license_plate,
-            customer:customers!inner (name)
-          )
-        `)
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-        .order('created_at', { ascending: false });
+    setEditingRepair(null);
+    fetchRepairs(); // frissítés a lista betöltéséhez
+  };
 
-      if (!error) {
-        const formatted = (data ?? []).map((item) => {
-          const vehicle = item.vehicle as unknown as {
-            id: string;
-            make: string;
-            model: string;
-            license_plate?: string;
-            customer: { name: string } | { name: string }[] | null;
-          } | null;
+  const handleDelete = async (id: string) => {
+    const { error } = await supabase
+      .from('repairs')
+      .delete()
+      .eq('id', id);
 
-          let customerName = 'Nincs ügyfél';
-          if (vehicle?.customer) {
-            if (Array.isArray(vehicle.customer)) {
-              customerName = vehicle.customer[0]?.name ?? 'Nincs ügyfél';
-            } else if (typeof vehicle.customer === 'object' && vehicle.customer !== null) {
-              customerName = vehicle.customer.name ?? 'Nincs ügyfél';
-            }
-          }
+    if (error) {
+      console.error('Törlési hiba:', error);
+      alert('Nem sikerült törölni a javítást');
+      return;
+    }
 
-          return {
-            id: item.id,
-            description: item.description,
-            status: item.status,
-            created_at: item.created_at,
-            vehicle: vehicle ? {
-              make: vehicle.make,
-              model: vehicle.model,
-              license_plate: vehicle.license_plate,
-              customer: { name: customerName },
-            } : null,
-          };
-        });
-        setRepairs(formatted);
+    // Frissítsd a listát
+    setRepairs(prev => prev.filter(r => r.id !== id));
+  };
+
+  const fetchRepairs = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from('repairs')
+      .select(`
+        id, description, status, created_at,
+        vehicle:vehicles!inner (
+          id, make, model, license_plate,
+          customer:customers!inner (name)
+        )
+      `)
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Hiba:', error);
+      return;
+    }
+
+    const formatted = (data ?? []).map((item) => {
+      const vehicle = item.vehicle as unknown as {
+        id: string;
+        make: string;
+        model: string;
+        license_plate?: string;
+        customer: { name: string } | { name: string }[] | null;
+      } | null;
+
+      let customerName = 'Nincs ügyfél';
+      if (vehicle?.customer) {
+        if (Array.isArray(vehicle.customer)) {
+          customerName = vehicle.customer[0]?.name ?? 'Nincs ügyfél';
+        } else if (typeof vehicle.customer === 'object' && vehicle.customer !== null) {
+          customerName = vehicle.customer.name ?? 'Nincs ügyfél';
+        }
       }
-    };
-    fetchAgain();
+
+      return {
+        id: item.id,
+        description: item.description,
+        status: item.status,
+        created_at: item.created_at,
+        vehicle: vehicle ? {
+          make: vehicle.make,
+          model: vehicle.model,
+          license_plate: vehicle.license_plate,
+          customer: { name: customerName },
+        } : null,
+      };
+    });
+
+    setRepairs(formatted);
+    setLoading(false);
   };
 
   return (
@@ -218,8 +250,19 @@ export default function RepairsPage() {
                 Új javítás
               </Button>
             </DialogTrigger>
-            <DialogContent>
-              <CreateRepairForm onSuccess={handleRepairCreated} />
+            <DialogContent className="sm:max-w-150">
+              <DialogHeader>
+                <DialogTitle>{editingRepair ? 'Javítás szerkesztése' : 'Új javítás hozzáadása'}</DialogTitle>
+              </DialogHeader>
+              <CreateRepairForm 
+                onSuccess={handleRepairCreated}
+                defaultValues={editingRepair ? {
+                  id: editingRepair.id,
+                  description: editingRepair.description,
+                  status: editingRepair.status,
+                  vehicle_id: editingRepair.vehicle ? 'valami_id' : '', // ha van vehicle_id, töltsd be
+                } : undefined}
+              />
             </DialogContent>
           </Dialog>
 
@@ -276,6 +319,7 @@ export default function RepairsPage() {
                 <TableHead>Leírás</TableHead>
                 <TableHead>Státusz</TableHead>
                 <TableHead>Dátum</TableHead>
+                <TableHead>Műveletek</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -292,6 +336,40 @@ export default function RepairsPage() {
                     </span>
                   </TableCell>
                   <TableCell>{new Date(r.created_at).toLocaleDateString('hu-HU')}</TableCell>
+                  <TableCell className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        setEditingRepair(r);
+                        setIsNewRepairOpen(true);
+                      }}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Biztosan törölni szeretnéd?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Ez a művelet nem visszavonható. A javítás &apos;{r.description}&apos; véglegesen törlődik.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Mégse</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDelete(r.id)} className="bg-red-600 hover:bg-red-700">
+                            Törlés
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

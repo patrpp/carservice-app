@@ -10,16 +10,24 @@ import { Vehicle } from '@/types/index';
 
 interface CreateRepairFormProps {
   onSuccess?: () => void;
+  defaultValues?: {
+    id?: string;
+    description?: string;
+    status?: string;
+    vehicle_id?: string;
+  };
 }
 
-export function CreateRepairForm({ onSuccess }: CreateRepairFormProps = {}) {
-  const [vehicleId, setVehicleId] = useState("");
-  const [description, setDescription] = useState("");
+export function CreateRepairForm({ onSuccess, defaultValues }: CreateRepairFormProps = {}) {
+  const [vehicleId, setVehicleId] = useState(defaultValues?.vehicle_id || "");
+  const [description, setDescription] = useState(defaultValues?.description || "");
+  const [status, setStatus] = useState(defaultValues?.status || "pending");
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loadingVehicles, setLoadingVehicles] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Autók betöltése
   useEffect(() => {
     const fetchVehicles = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -56,7 +64,6 @@ export function CreateRepairForm({ onSuccess }: CreateRepairFormProps = {}) {
         created_at: string;
       };
 
-      // Minden autóhoz lekérdezzük az ügyfél nevét
       const formattedVehicles = await Promise.all(
         (rawData ?? []).map(async (item: RawVehicle) => {
           let customerName = 'Nincs ügyfél';
@@ -100,6 +107,7 @@ export function CreateRepairForm({ onSuccess }: CreateRepairFormProps = {}) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!vehicleId) {
       setError("Válassz egy autót!");
       return;
@@ -112,23 +120,40 @@ export function CreateRepairForm({ onSuccess }: CreateRepairFormProps = {}) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Nincs bejelentkezve felhasználó");
 
-      const { error } = await supabase
-        .from('repairs')
-        .insert({
-          vehicle_id: vehicleId,
-          description,
-          user_id: user.id,
-          status: 'pending',
-        });
+      if (defaultValues?.id) {
+        // MÓDOSÍTÁS (UPDATE)
+        const { error } = await supabase
+          .from('repairs')
+          .update({
+            vehicle_id: vehicleId,
+            description,
+            status,
+          })
+          .eq('id', defaultValues.id);
 
-      if (error) throw error;
+        if (error) throw error;
+      } else {
+        // ÚJ LÉTREHOZÁS (INSERT)
+        const { error } = await supabase
+          .from('repairs')
+          .insert({
+            vehicle_id: vehicleId,
+            description,
+            user_id: user.id,
+            status: status || 'pending',
+          });
 
+        if (error) throw error;
+      }
+
+      // Reset form
       setVehicleId("");
       setDescription("");
+      setStatus("pending");
       onSuccess?.();
     } catch (err) {
-      console.error("Javítás létrehozási hiba:", err);
-      setError(err instanceof Error ? err.message : "Nem sikerült létrehozni a javítást");
+      console.error("Javítás műveleti hiba:", err);
+      setError(err instanceof Error ? err.message : "Nem sikerült elmenteni a javítást");
     } finally {
       setIsSubmitting(false);
     }
@@ -136,9 +161,11 @@ export function CreateRepairForm({ onSuccess }: CreateRepairFormProps = {}) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow">
-      <h2 className="text-2xl font-bold text-black">Új javítás</h2>
+      <h2 className="text-2xl font-bold text-black">
+        {defaultValues?.id ? "Javítás szerkesztése" : "Új javítás"}
+      </h2>
 
-      <div className="space-y-2">  
+      <div className="space-y-2">
         <Label htmlFor="vehicle" className="text-black">Autó</Label>
         {loadingVehicles ? (
           <p className="text-sm text-gray-500">Autók betöltése...</p>
@@ -168,7 +195,7 @@ export function CreateRepairForm({ onSuccess }: CreateRepairFormProps = {}) {
         )}
       </div>
 
-      <div className="space-y-2">  
+      <div className="space-y-2">
         <Label htmlFor="description" className="text-black">Leírás</Label>
         <Textarea
           id="description"
@@ -181,8 +208,25 @@ export function CreateRepairForm({ onSuccess }: CreateRepairFormProps = {}) {
         />
       </div>
 
+      <div className="space-y-2">
+        <Label htmlFor="status" className="text-black">Státusz</Label>
+        <Select value={status} onValueChange={setStatus}>
+          <SelectTrigger id="status">
+            <SelectValue placeholder="Válassz státuszt" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="pending">Függőben</SelectItem>
+            <SelectItem value="in_progress">Folyamatban</SelectItem>
+            <SelectItem value="diagnosed">Diagnosztizálva</SelectItem>
+            <SelectItem value="waiting_parts">Alkatrészre vár</SelectItem>
+            <SelectItem value="completed">Kész</SelectItem>
+            <SelectItem value="invoiced">Számlázva</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       <Button type="submit" disabled={isSubmitting || loadingVehicles} className="w-full">
-        {isSubmitting ? "Létrehozás..." : "Javítás hozzáadása"}
+        {isSubmitting ? "Mentés..." : defaultValues?.id ? "Módosítás mentése" : "Javítás hozzáadása"}
       </Button>
 
       {error && (
