@@ -1,26 +1,58 @@
-/* Import Tailwind v4 (includes preflight/base, components, utilities) */
 @import "tailwindcss";
 
-/* Custom theme variables (before or after the import) */
+/* Alap CSS változóink (Shadcn/next-themes kompatibilis) */
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --radius: 0.5rem;  /* example radius */
-  /* Add any other custom variables here if needed */
+  --card: #ffffff;
+  --card-foreground: #171717;
+  --popover: #ffffff;
+  --popover-foreground: #171717;
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --secondary: #f3f4f6;
+  --secondary-foreground: #111827;
+  --muted: #f3f4f6;
+  --muted-foreground: #6b7280;
+  --accent: #f3f4f6;
+  --accent-foreground: #111827;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #e5e7eb;
+  --input: #e5e7eb;
+  --ring: #2563eb;
+  --radius: 0.5rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Sötét mód */
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --card: #111111;
+  --card-foreground: #ededed;
+  --popover: #111111;
+  --popover-foreground: #ededed;
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+  --secondary: #1f2937;
+  --secondary-foreground: #f3f4f6;
+  --muted: #1f2937;
+  --muted-foreground: #9ca3af;
+  --accent: #1f2937;
+  --accent-foreground: #f3f4f6;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #374151;
+  --input: #374151;
+  --ring: #3b82f6;
 }
 
-/* Global styles */
+/* Alap globális stílusok (alkalmazás-specifikus nélkül) */
 body {
-  background: var(--background);
-  color: gray !important; 
+  background-color: var(--background);
+  color: var(--foreground);
+  margin: 0;
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Ha Shadcn komponenseket használsz, ezek a változók automatikusan működnek */

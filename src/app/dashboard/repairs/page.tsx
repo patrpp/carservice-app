@@ -358,7 +358,7 @@ export default function RepairsPage() {
                         <AlertDialogHeader>
                           <AlertDialogTitle>Biztosan törölni szeretnéd?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Ez a művelet nem visszavonható. A javítás &apos;{r.description}&apos; véglegesen törlődik.
+                           A  &apos;{r.description}&apos; javítás véglegesen törlődik.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>

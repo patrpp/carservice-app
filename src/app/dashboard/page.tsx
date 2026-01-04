@@ -6,8 +6,8 @@ import { User } from '@supabase/supabase-js';
 import { CreateRepairForm } from '@/components/CreateRepairForm';
 import { CreateVehicleForm } from '@/components/CreateVehicleForm';
 import { CreateCustomerForm } from '@/components/CreateCustomerForm';
-import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+
 
 interface JoinedRepair {
   id: string;
@@ -94,10 +94,6 @@ export default function Dashboard() {
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    window.location.href = '/';
-  };
 
   const refreshRepairs = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -173,24 +169,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-6xl mx-auto p-8">
-        {/* Fejléc */}
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold text-black">Műhely Dashboard</h1>
-          <div className="flex items-center gap-6">
-            <span className="text-lg text-black">
-              Bejelentkezve: <strong>{user.email}</strong>
-            </span>
-            <Button variant="destructive" onClick={handleSignOut}>
-              Kijelentkezés
-            </Button>
-          </div>
-        </div>
-  <nav className="flex gap-8 mb-12 text-lg font-medium">
-          <Link href="/dashboard/repairs" className="text-black hover:underline">Javítások</Link>
-          <Link href="/dashboard/customers" className="text-black hover:underline">Ügyfelek</Link>
-          <Link href="/dashboard/vehicles" className="text-black hover:underline">Autók</Link>
-        </nav>
-
+         
         {/* Javítások listája */}
         <div>
           <h2 className="text-2xl font-bold text-black mb-6">Javítási feladatok</h2>
@@ -202,7 +181,7 @@ export default function Dashboard() {
           )}
 
           {repairs.length === 0 ? (
-            <div className="bg-white rounded-xl shadow p-12 text-center">
+            <div className=" rounded-xl shadow p-12 text-center">
               <p className="text-xl text-gray-600">
                 Még nincs javítási feladat.
               </p>
@@ -212,7 +191,7 @@ export default function Dashboard() {
               {repairs.map((repair) => (
                 <div
                   key={repair.id}
-                  className="bg-white rounded-xl shadow p-6 hover:shadow-md transition"
+                  className="rounded-xl shadow p-6 hover:shadow-md transition"
                 >
                   <h3 className="text-xl font-semibold text-black mb-2">
                     <p className="text-black mb-4">{repair.description}</p>
