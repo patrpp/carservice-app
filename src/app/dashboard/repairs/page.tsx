@@ -17,9 +17,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ChevronDown, Search, Plus, Pencil, Trash2 } from 'lucide-react';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -27,9 +24,38 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import {
+  ChevronDown,
+  Search,
+  Plus,
+  Pencil,
+  Trash2,
+  Car,
+  User,
+  Wrench,
+  Clock,
+  Package,
+  CheckCircle2,
+  Receipt,
+} from 'lucide-react';
 import { CreateRepairForm } from '@/components/CreateRepairForm';
 
+interface Customer {
+  name: string;
+}
 
 interface JoinedRepair {
   id: string;
@@ -62,281 +88,311 @@ const statusColors: Record<string, string> = {
   invoiced: 'indigo',
 };
 
+const statusIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+  pending: Clock,
+  in_progress: Wrench,
+  diagnosed: Search,
+  waiting_parts: Package,
+  completed: CheckCircle2,
+  invoiced: Receipt,
+};
+
 export default function RepairsPage() {
   const [repairs, setRepairs] = useState<JoinedRepair[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState<'created_at' | 'status' | 'description'>('created_at');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [sortBy, setSortBy] = useState<'created_at' | 'status'>('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [isNewRepairOpen, setIsNewRepairOpen] = useState(false);
   const [editingRepair, setEditingRepair] = useState<JoinedRepair | null>(null);
 
-  useEffect(() => {
-    const fetchRepairs = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+  const fetchRepairs = async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
 
-      const { data, error } = await supabase
-        .from('repairs')
-        .select(`
-          id, description, status, created_at,
-          vehicle:vehicles!inner (
-            id, make, model, license_plate,
-            customer:customers!inner (name)
-          )
-        `)
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+  const { data, error } = await supabase
+    .from('repairs')
+    .select(`
+      id, description, status, created_at,
+      vehicle:vehicles!inner (
+        make, model, license_plate,
+        customer:customers!inner (name)
+      )
+    `)
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Hiba:', error);
-        return;
-      }
+  if (error) {
+    console.error('Javítások betöltése sikertelen:', error);
+    return;
+  }
 
-      console.log("Nyers adatok a Supabase-től:", data);
+  if (!data) {
+    setRepairs([]);
+    setLoading(false);
+    return;
+  }
 
-      const formatted = (data ?? []).map((item) => {
-        const vehicle = item.vehicle as unknown as {
-          id: string;
-          make: string;
-          model: string;
-          license_plate?: string;
-          customer: { name: string } | { name: string }[] | null;
-        } | null;
+  const transformedData: JoinedRepair[] = data.map((repair) => {
+    // A vehicle objektum, NEM tömb (1:1 kapcsolat)
+    const vehicleData = Array.isArray(repair.vehicle)
+      ? repair.vehicle[0]
+      : repair.vehicle;
 
-        let customerName = 'Nincs ügyfél';
-        if (vehicle?.customer) {
-          if (Array.isArray(vehicle.customer)) {
-            customerName = vehicle.customer[0]?.name ?? 'Nincs ügyfél';
-          } else if (typeof vehicle.customer === 'object' && vehicle.customer !== null) {
-            customerName = vehicle.customer.name ?? 'Nincs ügyfél';
+    return {
+      id: repair.id,
+      description: repair.description || '',
+      status: repair.status,
+      created_at: repair.created_at,
+      vehicle: vehicleData
+        ? {
+            make: vehicleData.make || '',
+            model: vehicleData.model || '',
+            license_plate: vehicleData.license_plate || undefined,
+            customer: vehicleData.customer
+              ? Array.isArray(vehicleData.customer)
+                ? { name: vehicleData.customer[0]?.name || '' }
+                : { name: (vehicleData.customer as Customer).name || '' }
+              : null,
           }
-        }
-
-        return {
-          id: item.id,
-          description: item.description,
-          status: item.status,
-          created_at: item.created_at,
-          vehicle: vehicle ? {
-            make: vehicle.make,
-            model: vehicle.model,
-            license_plate: vehicle.license_plate,
-            customer: { name: customerName },
-          } : null,
-        };
-      });
-
-      setRepairs(formatted);
-      setLoading(false);
+        : null,
     };
+  });
 
+  setRepairs(transformedData);
+  setLoading(false);
+};
+
+  useEffect(() => {
     fetchRepairs();
   }, []);
 
   const filteredRepairs = useMemo(() => {
     let result = [...repairs];
-    if (searchTerm.trim()) {
+
+    if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      result = result.filter(r => {
-        return (
-          r.description?.toLowerCase().includes(term) ||
-          r.vehicle?.make?.toLowerCase().includes(term) ||
-          r.vehicle?.model?.toLowerCase().includes(term) ||
-          r.vehicle?.customer?.name?.toLowerCase().includes(term)
-        );
-      });
+      result = result.filter(r =>
+        r.description.toLowerCase().includes(term) ||
+        r.vehicle?.make.toLowerCase().includes(term) ||
+        r.vehicle?.model.toLowerCase().includes(term) ||
+        r.vehicle?.customer?.name?.toLowerCase().includes(term)
+      );
+    }
+
+    if (statusFilter !== 'all') {
+      result = result.filter(r => r.status === statusFilter);
     }
 
     result.sort((a, b) => {
-      const valA = sortBy === 'created_at' ? new Date(a.created_at).getTime() : 
-                 sortBy === 'status' ? a.status : a.description?.toLowerCase() || '';
-      const valB = sortBy === 'created_at' ? new Date(b.created_at).getTime() : 
-                 sortBy === 'status' ? b.status : b.description?.toLowerCase() || '';
-      return sortOrder === 'asc' ? (valA > valB ? 1 : -1) : (valA < valB ? 1 : -1);
+      const aVal =
+        sortBy === 'created_at'
+          ? new Date(a.created_at).getTime()
+          : a.status;
+      const bVal =
+        sortBy === 'created_at'
+          ? new Date(b.created_at).getTime()
+          : b.status;
+
+      return sortOrder === 'asc'
+        ? aVal > bVal ? 1 : -1
+        : aVal < bVal ? 1 : -1;
     });
 
     return result;
-  }, [repairs, searchTerm, sortBy, sortOrder]);
-
-  const handleRepairCreated = () => {
-    setIsNewRepairOpen(false);
-    setEditingRepair(null);
-    fetchRepairs(); // frissítés a lista betöltéséhez
-  };
+  }, [repairs, searchTerm, statusFilter, sortBy, sortOrder]);
 
   const handleDelete = async (id: string) => {
-    const { error } = await supabase
-      .from('repairs')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      console.error('Törlési hiba:', error);
-      alert('Nem sikerült törölni a javítást');
-      return;
+    const { error } = await supabase.from('repairs').delete().eq('id', id);
+    if (!error) {
+      setRepairs(prev => prev.filter(r => r.id !== id));
     }
-
-    // Frissítsd a listát
-    setRepairs(prev => prev.filter(r => r.id !== id));
   };
 
-  const fetchRepairs = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+  const handleStatusChange = async (repairId: string, newStatus: string) => {
+    const originalRepair = repairs.find(r => r.id === repairId);
+    if (!originalRepair) return;
 
-    const { data, error } = await supabase
-      .from('repairs')
-      .select(`
-        id, description, status, created_at,
-        vehicle:vehicles!inner (
-          id, make, model, license_plate,
-          customer:customers!inner (name)
+    // Optimistic update
+    setRepairs(prev =>
+      prev.map(r =>
+        r.id === repairId ? { ...r, status: newStatus } : r
+      )
+    );
+
+    try {
+      const { error } = await supabase
+        .from('repairs')
+        .update({
+          status: newStatus,
+          completed_at: newStatus === 'completed' ? new Date().toISOString() : null,
+        })
+        .eq('id', repairId);
+
+      if (error) throw error;
+    } catch (err) {
+      console.error('Státusz frissítési hiba:', err);
+      alert('Nem sikerült frissíteni az állapotot.');
+
+      // Rollback
+      setRepairs(prev =>
+        prev.map(r =>
+          r.id === repairId ? { ...r, status: originalRepair.status } : r
         )
-      `)
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Hiba:', error);
-      return;
+      );
     }
-
-    const formatted = (data ?? []).map((item) => {
-      const vehicle = item.vehicle as unknown as {
-        id: string;
-        make: string;
-        model: string;
-        license_plate?: string;
-        customer: { name: string } | { name: string }[] | null;
-      } | null;
-
-      let customerName = 'Nincs ügyfél';
-      if (vehicle?.customer) {
-        if (Array.isArray(vehicle.customer)) {
-          customerName = vehicle.customer[0]?.name ?? 'Nincs ügyfél';
-        } else if (typeof vehicle.customer === 'object' && vehicle.customer !== null) {
-          customerName = vehicle.customer.name ?? 'Nincs ügyfél';
-        }
-      }
-
-      return {
-        id: item.id,
-        description: item.description,
-        status: item.status,
-        created_at: item.created_at,
-        vehicle: vehicle ? {
-          make: vehicle.make,
-          model: vehicle.model,
-          license_plate: vehicle.license_plate,
-          customer: { name: customerName },
-        } : null,
-      };
-    });
-
-    setRepairs(formatted);
-    setLoading(false);
   };
 
   return (
     <div className="p-6 lg:p-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-black">Javítások</h1>
-        <div className="flex gap-4">
-          <Dialog open={isNewRepairOpen} onOpenChange={setIsNewRepairOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2">
-                <Plus className="h-4 w-4" />
-                Új javítás
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-150">
-              <DialogHeader>
-                <DialogTitle>{editingRepair ? 'Javítás szerkesztése' : 'Új javítás hozzáadása'}</DialogTitle>
-              </DialogHeader>
-              <CreateRepairForm 
-                onSuccess={handleRepairCreated}
-                defaultValues={editingRepair ? {
-                  id: editingRepair.id,
-                  description: editingRepair.description,
-                  status: editingRepair.status,
-                  vehicle_id: editingRepair.vehicle ? 'valami_id' : '', // ha van vehicle_id, töltsd be
-                } : undefined}
-              />
-            </DialogContent>
-          </Dialog>
+      <div className="flex justify-between mb-6">
+        <h1 className="text-3xl font-bold">Javítások</h1>
 
-          <Link href="/dashboard">
-            <Button variant="outline">Vissza a dashboardra</Button>
-          </Link>
-        </div>
+        <Dialog open={isNewRepairOpen} onOpenChange={setIsNewRepairOpen}>
+          <DialogTrigger asChild>
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" />
+              Új javítás
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Új javítás rögzítése</DialogTitle>
+            </DialogHeader>
+            <CreateRepairForm
+              onSuccess={() => {
+                setIsNewRepairOpen(false);
+                setEditingRepair(null);
+                fetchRepairs();
+              }}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
 
+      {/* Szűrők */}
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-3.5 h-4 w-4 text-gray-400" />
           <Input
             placeholder="Keresés leírás, autó, ügyfél alapján..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
           />
         </div>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="gap-2">
-              Rendezés: {sortBy === 'created_at' ? 'Dátum' : sortBy === 'status' ? 'Állapot' : 'Leírás'}
-              <ChevronDown className="h-4 w-4" />
+            <Button variant="outline" className="w-full sm:w-auto">
+              {statusFilter === 'all' ? 'Minden állapot' : statusLabels[statusFilter] || 'Összes'}
+              <ChevronDown className="ml-2 h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => { setSortBy('created_at'); setSortOrder('desc'); }}>
-              Dátum (legújabb elöl)
+          <DropdownMenuContent>
+            <DropdownMenuItem onClick={() => setStatusFilter('all')}>
+              Összes
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => { setSortBy('created_at'); setSortOrder('asc'); }}>
-              Dátum (legrégebbi elöl)
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => { setSortBy('status'); setSortOrder('asc'); }}>
-              Állapot (A-Z)
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => { setSortBy('description'); setSortOrder('asc'); }}>
-              Leírás (A-Z)
-            </DropdownMenuItem>
+            {Object.entries(statusLabels).map(([key, label]) => (
+              <DropdownMenuItem key={key} onClick={() => setStatusFilter(key)}>
+                {label}
+              </DropdownMenuItem>
+            ))}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
 
-      {loading ? (
-        <p>Betöltés...</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Autó</TableHead>
-                <TableHead>Ügyfél</TableHead>
-                <TableHead>Leírás</TableHead>
-                <TableHead>Státusz</TableHead>
-                <TableHead>Dátum</TableHead>
-                <TableHead>Műveletek</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredRepairs.map(r => (
+      {/* Táblázat */}
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Javítás</TableHead>
+              <TableHead>Állapot</TableHead>
+              <TableHead>Dátum</TableHead>
+              <TableHead className="text-right">Műveletek</TableHead>
+            </TableRow>
+          </TableHeader>
+
+          <TableBody>
+            {filteredRepairs.map(r => {
+              const StatusIcon = statusIcons[r.status] || Clock;
+              const color = statusColors[r.status] || 'gray';
+
+              return (
                 <TableRow key={r.id}>
-                  <TableCell>{r.vehicle ? `${r.vehicle.make} ${r.vehicle.model}` : 'Nincs'}</TableCell>
-                  <TableCell>{r.vehicle?.customer?.name ?? 'Nincs ügyfél'}</TableCell>
-                  <TableCell>{r.description}</TableCell>
                   <TableCell>
-                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                      statusColors[r.status] ? `bg-${statusColors[r.status]}-100 text-${statusColors[r.status]}-800` : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {statusLabels[r.status] || r.status}
-                    </span>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 font-medium">
+                        <Car className="h-4 w-4 text-muted-foreground" />
+                        {r.vehicle?.make} {r.vehicle?.model}
+                        {r.vehicle?.license_plate && (
+                          <span className="text-xs text-muted-foreground">
+                            • {r.vehicle.license_plate}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <User className="h-4 w-4" />
+                        {r.vehicle?.customer?.name || 'Nincs ügyfél'}
+                      </div>
+                      <div className="text-sm text-muted-foreground italic">
+                        {r.description || 'Nincs leírás'}
+                      </div>
+                    </div>
                   </TableCell>
-                  <TableCell>{new Date(r.created_at).toLocaleDateString('hu-HU')}</TableCell>
-                  <TableCell className="flex gap-2">
+
+                  {/* Kattintható státuszválasztó */}
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={cn(
+                            "h-8 px-3 gap-2 font-medium transition-colors",
+                            `bg-${color}-100 hover:bg-${color}-200 text-${color}-800`
+                          )}
+                        >
+                          <StatusIcon className="h-4 w-4" />
+                          <span className="hidden sm:inline">{statusLabels[r.status] || r.status}</span>
+                          <ChevronDown className="h-3.5 w-3.5 opacity-70" />
+                        </Button>
+                      </DropdownMenuTrigger>
+
+                      <DropdownMenuContent align="start" className="w-56">
+                        {Object.entries(statusLabels).map(([value, label]) => {
+                          const Icon = statusIcons[value] || Clock;
+                          const itemColor = statusColors[value] || 'gray';
+
+                          return (
+                            <DropdownMenuItem
+                              key={value}
+                              className={cn(
+                                "flex items-center gap-2 cursor-pointer",
+                                r.status === value && "bg-accent font-medium"
+                              )}
+                              onSelect={() => handleStatusChange(r.id, value)}
+                            >
+                              <Icon className={`h-4 w-4 text-${itemColor}-600`} />
+                              {label}
+                            </DropdownMenuItem>
+                          );
+                        })}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+
+                  <TableCell className="text-muted-foreground">
+                    {new Date(r.created_at).toLocaleDateString('hu-HU', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                    })}
+                  </TableCell>
+
+                  <TableCell className="text-right flex gap-1 justify-end">
                     <Button
                       variant="ghost"
                       size="icon"
@@ -356,14 +412,17 @@ export default function RepairsPage() {
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Biztosan törölni szeretnéd?</AlertDialogTitle>
+                          <AlertDialogTitle>Biztosan törlöd?</AlertDialogTitle>
                           <AlertDialogDescription>
-                           A  &apos;{r.description}&apos; javítás véglegesen törlődik.
+                            A javítás {r.description ? `"${r.description}"` : ''} véglegesen törlődik.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Mégse</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleDelete(r.id)} className="bg-red-600 hover:bg-red-700">
+                          <AlertDialogAction
+                            onClick={() => handleDelete(r.id)}
+                            className="bg-red-600 hover:bg-red-700"
+                          >
                             Törlés
                           </AlertDialogAction>
                         </AlertDialogFooter>
@@ -371,9 +430,21 @@ export default function RepairsPage() {
                     </AlertDialog>
                   </TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
+
+      {loading && (
+        <div className="mt-8 text-center text-muted-foreground">
+          Betöltés...
+        </div>
+      )}
+
+      {filteredRepairs.length === 0 && !loading && (
+        <div className="mt-8 text-center text-muted-foreground">
+          Nincs találat a keresési feltételekre.
         </div>
       )}
     </div>

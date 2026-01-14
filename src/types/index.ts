@@ -19,7 +19,6 @@ export interface Vehicle {
   vin?: string;
   mileage?: number;
   created_at: string;
-  customer: Pick<Customer, 'name'> | null;  // null lehetséges
 }
 
 export interface RepairBase {
@@ -36,12 +35,9 @@ export interface RepairBase {
   created_at: string;
 }
 
-// Alap repair (nincs join) – egyszerű alias
-export type Repair = RepairBase;
-
-// Join-olt repair (dashboard listázáshoz) – vehicle objektum
 export interface JoinedRepair extends RepairBase {
   vehicle: {
+    id: string;
     make: string;
     model: string;
     license_plate?: string;
