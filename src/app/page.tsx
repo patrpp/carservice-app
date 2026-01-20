@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { User } from '@supabase/supabase-js';
-import { ModeToggle } from '@/components/ui/mode-toggle';
+import ThemeSwitch from '@/components/ThemeSwitch';
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
@@ -74,7 +74,6 @@ export default function Home() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-8">
-      <ModeToggle />
       <h1 className="text-4xl font-bold">Autószerelő App</h1>
       <button
         onClick={signInWithGoogle}
@@ -88,6 +87,7 @@ export default function Home() {
         </svg>
         Bejelentkezés Google-lal
       </button>
+         <ThemeSwitch />
     </main>
   );
 }

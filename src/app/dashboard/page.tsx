@@ -44,7 +44,7 @@ export default function Dashboard() {
         console.log("Nyers javítás adatok (Supabase-től):", data);
         const formattedRepairs: JoinedRepair[] = (data ?? []).map((item) => {
   const vehicle = item.vehicle as unknown as {
-    id: string;           // ← most már benne van
+    id: string;          
     make: string;
     model: string;
     license_plate?: string;
@@ -108,7 +108,7 @@ export default function Dashboard() {
 
  const formattedRepairs: JoinedRepair[] = (data ?? []).map((item) => {
   const vehicle = item.vehicle as unknown as {
-    id: string;           // ← most már benne van
+    id: string;           
     make: string;
     model: string;
     license_plate?: string;
@@ -151,9 +151,9 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-6xl mx-auto p-8">
-        {/* Hibaüzenet megjelenítése */}
+
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-center">
           {error}
@@ -223,6 +223,4 @@ export default function Dashboard() {
       </div>
     </div>
   );
-
-
 }

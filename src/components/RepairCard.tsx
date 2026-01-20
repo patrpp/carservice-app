@@ -59,122 +59,90 @@ export function RepairCard({ repair, onStatusChange }: RepairCardProps) {
     statusConfig[repair.status as keyof typeof statusConfig] ||
     statusConfig.pending;
 
-  return (
-    <div className="
-      group relative overflow-hidden rounded-2xl
-      border border-gray-200/50 dark:border-gray-700/50
-      bg-white dark:bg-gray-900/80 backdrop-blur-sm
-      shadow-lg shadow-black/5 dark:shadow-black/30
-      transition-all duration-300 ease-out
-      hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02]
-    ">
-      {/* Gradiens overlay */}
-      <div
-        className={`
-          absolute inset-0 opacity-0 group-hover:opacity-100
-          transition-opacity duration-500
-          bg-linear-to-br ${status.color} opacity-10
-        `}
-      ></div>
+return (
+  <div className="group relative">
+    <div
+      className={`
+        pointer-events-none absolute -inset-1 rounded-2xl
+        bg-linear-to-r ${status.color} 
+        blur-2xl opacity-25
+        transition-all duration-1000
+        group-hover:opacity-100
+      `}
+    />
+<div
+  className="
+    relative px-7 py-6
+    rounded-2xl
+    bg-(--card) text-(--card-foreground)
+    flex flex-col items-center text-center
+    transition-all duration-300
+    hover:scale-[1.02]
+  "
+>
 
-     <div className="relative flex flex-col flex-1 p-6">
-  {/* HEADER */}
-  <div>
-    <h3 className="
-      text-lg font-semibold tracking-tight
-      text-gray-900 dark:text-gray-100
-      leading-snug
-    ">
-      {repair.description}
-    </h3>
+<h3
+  className={`
+    text-xl font-semibold mb-3
+    bg-linear-to-r ${status.color}
+    bg-clip-text text-transparent
+    transition-all duration-300
+    group-hover:opacity-90
+  `}
+>
+  {repair.description}
+</h3>
 
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-          Ügyfél:{' '}
-          <span className="font-medium text-gray-800 dark:text-gray-200">
-            {repair.vehicle?.customer?.name ?? 'Nincs'}
-          </span>
-        </p>
 
-    <div className="mt-2 inline-flex items-center gap-2
-      rounded-lg
-      bg-gray-100/70 dark:bg-gray-800/60
-      px-3 py-1.5
-      text-sm text-gray-600 dark:text-gray-300
-    ">
-      <span className="font-medium">
-        {repair.vehicle?.make}
-      </span>
-      <span className="text-gray-400">•</span>
-      <span>
-        {repair.vehicle?.model}
-      </span>
-        <span className="text-gray-400">•</span>
-      <span>
-        {repair.vehicle?.license_plate ?? 'Nincs rendszám'}
-      </span>
+
+<p className="text-sm text-(--muted-foreground) mb-1">
+  {repair.vehicle
+    ? `${repair.vehicle.make} ${repair.vehicle.model}`
+    : 'Nincs hozzárendelt autó'}
+</p>
+
+<p className="text-xs text-(--muted-foreground) mb-6">
+  Ügyfél:{' '}
+  <span className="text-(--foreground) font-medium">
+    {repair.vehicle?.customer?.name ?? '–'}
+  </span>
+</p>
+
+
+      <div className="flex justify-center gap-2 mt-auto">
+        {Object.entries(statusConfig).map(([value, cfg]) => {
+          const isActive = repair.status === value;
+          const Icon = cfg.icon;
+
+          return (
+            <button
+              key={value}
+              onClick={() => onStatusChange(value)}
+              className={`
+                group/status relative w-10 h-10 rounded-full
+                flex items-center justify-center
+                transition-all duration-300
+                ${
+                  isActive
+                    ? `bg-linear-to-br ${cfg.color} text-white ring-2 ring-offset-2 ring-offset-gray-900 ${cfg.ring}`
+                    : `bg-gray-800/60 hover:bg-gray-700/80 hover:scale-110`
+                }
+              `}
+            >
+              <Icon
+                size={18}
+                strokeWidth={2.5}
+                className={`
+                  ${isActive
+                    ? 'text-white drop-shadow-md'
+                    : 'text-gray-300 group-hover:text-gray-100 transition-colors'}
+                `}
+              />
+            </button>
+          );
+        })}
+      </div>
     </div>
   </div>
-
-  {/* SPACER */}
-  <div className="flex-1" />
-
-  {/* DIVIDER */}
-  <div className="
-    my-4 h-px w-full
-    bg-linear-to-r from-transparent
-    via-gray-200/70 dark:via-gray-700/70
-    to-transparent
-  " />
-
-  {/* FOOTER – STATUS */}
-<div className=" grid grid-cols-3 gap-2 justify-center">
-    {Object.entries(statusConfig).map(([value, cfg]) => {
-      const Icon = cfg.icon;
-      const isActive = repair.status === value;
-
-      return (
-        <button
-          key={value}
-          onClick={() => onStatusChange(value)}
-          className={`
-            group/status relative w-11 h-11 rounded-full
-            flex items-center justify-center
-            transition-all duration-300 ease-out
-
-            ${isActive
-              ? `
-                bg-linear-to-br ${cfg.color}
-                text-white/90
-                ring-1 ${cfg.ring}
-                ring-offset-1 ring-offset-white/60
-                dark:ring-offset-gray-900/60
-                shadow-sm
-              `
-              : `
-                bg-gray-100/80 dark:bg-gray-800/60
-                hover:bg-gray-200/80 dark:hover:bg-gray-700/60
-                hover:scale-105
-              `
-            }
-          `}
-        >
-          <Icon size={20} />
-
-          <span className="
-            absolute bottom-full mb-2 px-3 py-1 text-xs
-            bg-gray-700 text-white rounded
-            opacity-0 group-hover/status:opacity-100
-            transition
-            pointer-events-none
-          ">
-            {cfg.label}
-          </span>
-        </button>
-      );
-    })}
-  </div>
-</div>
-
-    </div>
-  );
+);
 }

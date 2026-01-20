@@ -4,6 +4,7 @@ import { User } from '@supabase/supabase-js';
 import { LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils'; // ha van ilyen utility fájlod
 import { AnimatedMenuGroup } from './Navmenu';
+import ThemeSwitch from './ThemeSwitch';
 
 interface HeaderProps {
   user: User | null;
@@ -13,7 +14,11 @@ interface HeaderProps {
 export function Header({ user, onSignOut }: HeaderProps) {
   return (
     <div className="flex justify-between items-center mb-8 bg-white dark:bg-gray-600 p-6 rounded-xl shadow-sm">
+        <div className="flex items-center gap-4">
+ <ThemeSwitch />
+</div>
       <h1 className="text-4xl font-bold text-black dark:text-white">Műhely Dashboard</h1>
+    
 <div className="flex justify-center my-8">
   <AnimatedMenuGroup />
 </div>
