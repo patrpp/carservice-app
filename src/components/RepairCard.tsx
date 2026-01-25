@@ -80,7 +80,11 @@ return (
     hover:scale-[1.02]
   "
 >
-
+<p className="text-l text-(--muted-foreground) mb-2">
+  <span className="text-(--foreground) font-medium">
+  {repair.description}
+  </span>
+</p>
 <h3
   className={`
     text-xl font-semibold mb-3
@@ -90,7 +94,7 @@ return (
     group-hover:opacity-90
   `}
 >
-  {repair.description}
+   {repair.vehicle?.license_plate ?? '–'}
 </h3>
 
 

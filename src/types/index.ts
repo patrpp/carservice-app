@@ -19,6 +19,7 @@ export interface Vehicle {
   vin?: string;
   mileage?: number;
   created_at: string;
+  customer?: { name: string } | null;
 }
 
 export interface RepairBase {

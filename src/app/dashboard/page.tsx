@@ -3,12 +3,10 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { User } from '@supabase/supabase-js';
-import { CreateRepairForm } from '@/components/CreateRepairForm';
-import { CreateVehicleForm } from '@/components/CreateVehicleForm';
-import { CreateCustomerForm } from '@/components/CreateCustomerForm';
 import { RepairCard } from '@/components/RepairCard';
 import Link from 'next/link';
 import { JoinedRepair } from '@/types';
+import { CreateRepairModal } from '@/components/CreateRepairModal';
 
 
 export default function Dashboard() {
@@ -203,23 +201,12 @@ export default function Dashboard() {
   }}
 />
   ))}
+
+<div className="mt-8 flex justify-center">
+  <CreateRepairModal onSuccess={refreshRepairs} />
+</div>
 </div>
 
-        {/* Új űrlapok */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-          <div>
-            <h3 className="text-xl font-bold mb-4"></h3>
-            <CreateRepairForm onSuccess={refreshRepairs} />
-          </div>
-          <div>
-            <h3 className="text-xl font-bold mb-4"></h3>
-            <CreateCustomerForm onSuccess={refreshRepairs} />
-          </div>
-          <div>
-            <h3 className="text-xl font-bold mb-4"></h3>
-            <CreateVehicleForm onSuccess={refreshRepairs} />
-          </div>
-        </div>
       </div>
     </div>
   );

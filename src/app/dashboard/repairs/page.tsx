@@ -258,7 +258,7 @@ export default function RepairsPage() {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Új javítás rögzítése</DialogTitle>
+              <DialogTitle></DialogTitle>
             </DialogHeader>
             <CreateRepairForm
               onSuccess={() => {
@@ -342,8 +342,7 @@ export default function RepairsPage() {
                       </div>
                     </div>
                   </TableCell>
-
-                  {/* Kattintható státuszválasztó */}
+                  
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
