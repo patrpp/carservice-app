@@ -74,14 +74,14 @@ return (
   className="
     relative px-7 py-6
     rounded-2xl
-    bg-(--card) text-(--card-foreground)
+    bg-card text-card-foreground
     flex flex-col items-center text-center
     transition-all duration-300
     hover:scale-[1.02]
   "
 >
-<p className="text-l text-(--muted-foreground) mb-2">
-  <span className="text-(--foreground) font-medium">
+<p className="text-l text-muted-foreground mb-2">
+  <span className="text-foreground font-medium">
   {repair.description}
   </span>
 </p>
@@ -99,15 +99,15 @@ return (
 
 
 
-<p className="text-sm text-(--muted-foreground) mb-1">
+<p className="text-sm text-muted-foreground mb-1">
   {repair.vehicle
     ? `${repair.vehicle.make} ${repair.vehicle.model}`
     : 'Nincs hozzárendelt autó'}
 </p>
 
-<p className="text-xs text-(--muted-foreground) mb-6">
+<p className="text-xs text-muted-foreground mb-6">
   Ügyfél:{' '}
-  <span className="text-(--foreground) font-medium">
+  <span className="text-foreground font-medium">
     {repair.vehicle?.customer?.name ?? '–'}
   </span>
 </p>

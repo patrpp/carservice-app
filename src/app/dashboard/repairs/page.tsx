@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Input } from '@/components/ui/input';
+import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 import {
   Table,
   TableBody,
@@ -258,7 +259,9 @@ export default function RepairsPage() {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle></DialogTitle>
+         <VisuallyHidden.Root asChild>
+      <DialogTitle>Új javítás hozzáadása</DialogTitle>
+    </VisuallyHidden.Root>
             </DialogHeader>
             <CreateRepairForm
               onSuccess={() => {

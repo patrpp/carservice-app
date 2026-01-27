@@ -23,8 +23,6 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { CreateVehicleForm } from '@/components/CreateVehicleForm';
@@ -177,9 +175,7 @@ export default function VehiclesPage() {
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-150">
-              <DialogHeader>
-                <DialogTitle>Új autó hozzáadása</DialogTitle>
-              </DialogHeader>
+              
               <CreateVehicleForm onSuccess={handleVehicleCreated} />
             </DialogContent>
           </Dialog>
