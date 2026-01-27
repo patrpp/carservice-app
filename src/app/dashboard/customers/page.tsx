@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
-import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import {
   Table,
   TableBody,
@@ -173,23 +173,22 @@ export default function CustomersPage() {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-black dark:text-white">Ügyfelek</h1>
         <div className="flex gap-4">
-          <Dialog open={isNewCustomerOpen} onOpenChange={setIsNewCustomerOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2">
-                <Plus className="h-4 w-4" />
-                Új ügyfél
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-150">
-              <DialogHeader>
-                 <VisuallyHidden.Root asChild>
-                     <DialogTitle>Új javítás hozzáadása</DialogTitle>
-                   </VisuallyHidden.Root>
-              </DialogHeader>
-              <CreateCustomerForm onSuccess={handleCustomerCreated} />
-            </DialogContent>
-          </Dialog>
-
+         <Dialog open={isNewCustomerOpen} onOpenChange={setIsNewCustomerOpen}>
+  <DialogTrigger asChild>
+    <Button className="gap-2">
+      <Plus className="h-4 w-4" />
+      Új ügyfél
+    </Button>
+  </DialogTrigger>
+  <DialogContent className="sm:max-w-lg">
+    <DialogHeader>
+      <VisuallyHidden asChild>
+        <DialogTitle>Új ügyfél hozzáadása</DialogTitle>
+      </VisuallyHidden>
+    </DialogHeader>
+    <CreateCustomerForm onSuccess={handleCustomerCreated} />
+  </DialogContent>
+</Dialog>
           <Link href="/dashboard">
             <Button variant="outline">Vissza a dashboardra</Button>
           </Link>
