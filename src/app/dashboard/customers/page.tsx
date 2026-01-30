@@ -28,7 +28,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { CreateCustomerForm } from '@/components/CreateCustomerForm';
+import { CreateCustomerForm } from '../../../components/CreateCustomerForm';
 
 interface Customer {
   id: string;
@@ -56,8 +56,8 @@ export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState<'created_at' | 'name'>('created_at');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+const [sortBy, setSortBy] = useState<'created_at' | 'name'>('created_at');
+const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [isNewCustomerOpen, setIsNewCustomerOpen] = useState(false);
 
   useEffect(() => {
